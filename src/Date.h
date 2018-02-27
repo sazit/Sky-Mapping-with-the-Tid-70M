@@ -1,9 +1,3 @@
-/*
- * Date.h
- *
- *  Created on: 11/08/2014
- *
- */
 
 #ifndef DATE_H_
 #define DATE_H_
