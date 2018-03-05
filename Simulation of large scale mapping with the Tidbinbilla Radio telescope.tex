@@ -1,0 +1,205 @@
+\documentclass{article}%letter, article, report, book, memoir
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage[utf8]{inputenc}
+\usepackage{subfig}
+\author{Sajit Gurubacharya}
+\title{Simulation of Large Scale Mapping with Tidbinbilla's Telescope}
+\begin{document}
+\maketitle
+\vskip 1.5in
+\begin{center}
+\begin{Large}
+Summer Research Scholarship Program\\
+\vskip 0.5in
+\end{Large}
+\begin{large}
+Supervisor: Dr. Nicholas Tothill\\
+Secondary Supervisor: Dr. Miroslav Filipovic
+\end{large}
+\end{center}
+\newpage
+\begin{abstract}
+The Tidbinbilla 70 meter telescope (Tid-70m) is a radio telescope located in the Canberra Deep Space Communication Complex (CDSCC). It is part of the NASA's Deep Space Network. It was constructed in 1973 as a 64-meter diameter antenna. It was later extended to a 70-meter diameter in 1987 to enhance its capabilities for the Voyager 2 encounter with Neptune. It is the largest steerable parabolic antenna in the Southern Hemisphere.
+
+This report describes the scanning technique used by Tid-70m and possible ways to optimize the scanning process. The results seek to decrease scanning time while still maintaining a standard sampling rate. Optimizing techniques mainly rely on real time simulations to create a well sampled map of the sky.
+
+\end{abstract}
+\newpage
+\section{Introduction}
+\subsection{Project Overview}
+The Tid-70m, also known formally known as Deep Space Station 43 (DSS 43), is a 70-m single dish radio telescope. A small fraction of its time devoted to radio astronomy, as it's mainly used for communicating with deep space objects by NASA. It is thus important to maximize the scientific return on this time. On-the-fly (OTF) mapping is a surveying technique that is under development to allow for greater mapping efficiency. 
+
+Software simulation is used to simulate the sky coverage of observations, and hence plan telescope use. Optimization will take place using data gathered from these simulations. In detail, the software will take a set of proposed observations and simulate their sky coverage under different coordinate systems to understand what mapping procedures and times are required to provide a high-quality map of the sky.
+
+The Tid-70M has 2 receiving beams separated in azimuth by 30 milli degrees. The beams themselves receive waves in a span of 50 arc seconds. Sampling should take place at the Nyquist rate according to the Nyquist-Shannon sampling theorem. In this case, a sample should be taken every 25 arc seconds (0.006944.. degrees ).
+
+Optimization of this scanning process by properly sampling and being time efficient is the primary objective of this project.
+\subsubsection{On-the-Fly (OTF) Mapping}
+
+OTF mapping takes samples of the sky continuously rather than integrating at discrete positions on the sky. The scan pattern currently being implemented is a simple raster scan. The result is a rectangular map in either in RADec or AltAz coordinate systems, with scan directions parallel to either coordinate axis. The scan also involves integrating on an emission free reference position. The scan rate of the telescope is calculated based on the beam size and sampling rate. Altering the scan rate and stripe separation is also a part of the optimization process. 
+
+\subsubsection{Tid-70m Facts}
+\begin{tabular}{lllr}
+\hline
+\hline
+First year of observation & 1972\\
+\hline
+Type	&Azimuth-Elevation\\
+\hline
+Diameter &70 meters\\
+\hline
+Height &73 meters\\
+\hline
+Accuracy &within 0.005 degrees (pointing)\\
+&within 0.25mm (surface RMS)\\
+\hline
+Turning &0.25 degrees per second\\
+\end{tabular}
+
+\newpage
+\section{Theory and Methodology}
+The DSS-43 is a radio telescope situated in Tidbinbilla, Canberra. Being a radio telescope, observing conditions differ to that of optical telescopes. As such, the Tid-70m is not affected by factors like weather (bad clouds), stray radiation (the Sun, the Moon, light pollution from cities), rather it is more dependent on a man-made radio emissions, thermal radiation from the ground or atmosphere. The Sun generally does not matter, thus observations can be made during the day as well. Weather poses a threat when observing in high-frequency (greater than 20GHz) and is also affected by the amount (and distribution) of water vapor. Depending on the frequency, the rate at which the telescope must point back to a reference point must also be taken into account.
+\subsection{Coordinate Conversions}
+The Tid-70m points itself in Azimuth-Elevation while the coordinates are to be mapped in RADec. Due to the beams being separated in azimuth, over-sampling or under-sampling might occur while mapping in a RADec path. The angle of the beams relative to the scan path depends on many factors including the date, time of day, scan path and the telescope's location. The scanning is also restricted by the telescopes maximum turning rate as well as the elevation constrains, which is a minimum of 30 degrees off the ground mainly due to the size of the dish.
+There are infinitely many possible settings of the beam separation angle relative to the RADec plane. The angle itself will not stay constant throughout the scan due to the scanning point moving across the night sky, while the telescope stays fixed. Thus, using a fixed sampling rate might not be the optimal solution. The distance factor has not been taken into consideration in current models.
+Simulations of these scans will be necessary to figure out efficient scanning paths and sampling rates. The code was initially written in Juypter/IPython Notebook, but due to the large amount of iterations required, the final calculations were carried out in C++ by re-creating few of the classes. Packages used in Python include Numpy, Matplotlib, PyEphem, GeoPy and mainly Astropy. The calculations used for transformations between AltAz and RADec coordinates are credited to the Stargazing Network and Jean Meeus-Astronomical Algorithms.
+
+\newpage
+\subsection{Initial Simulations}
+This project initially started with getting familiar with Python and Astropy. Some simulations carried out are shown below.
+
+\begin{figure}[h!]
+\includegraphics[scale=.25]{galactic}
+\caption{The Galactic plane converted into RADec coordinates shown in an Aitoff projection.}
+
+\includegraphics[scale=.5]{quitoCanberra}
+\caption{Randomized AltAz coordinates approximating the sky's span in the RADec plane at different Earth locations.}
+\end{figure}
+\newpage
+
+
+\subsection{The Beam Separation}
+
+The beams of the telescopes are separated in azimuth, but while pointing out into the celestial sphere, longitude lines (right ascension) converge near the poles. This results in apparent beam separation varying while scanning parts of the sky in different declinations, even though the angle separation remains same. To correct this, the cos() function is used. 
+In my findings, the differing separations are fixed by plotting the apparent separation per cos(altitude). 
+
+\begin{figure}[h!]
+\includegraphics[scale=.5]{fixedSeperations}
+\caption{Apparent separations vs apparent separation per cos(altitude).}
+\end{figure}
+
+
+
+\begin{figure}[h!]
+\includegraphics[scale=.5]{seperations}
+\caption{Apparent beam separations deviating from initial path in RADec. Stripe separation around 4.5 degrees, beam separation set to 4 degrees}
+\end{figure}
+
+The periodic variations are thought to be caused by the Earth's rotation, as the whole scan takes around 5 days. The initial RADec scan path was a simple raster scan, similar to that shown in the next image. It can be seen how much the beams vary from the original path when considering time and the separation of the beams. It can also be seen that the distances between the two beams (dots) vary quite a bit.
+\newpage
+This is the apparent separation when it is solely calculated in RADec coordinates. Imagine placing a square box on the equator and moving it towards the equator. The square box will change its shape. This can also be seen in rectangular map projections such as the Mercator.
+
+Other smaller problems were encountered with rounding errors when converting between coordinates. The simulation shows the result when converting from the initial RADec path to AltAz, implementing the beam separation, then converting back to RADec to find actual part of the sky mapped. The resulting positions vary, but in (10-14) , so they have been disregarded in final simulations.
+ 
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[scale=.24]{conv}
+\caption{In RADec, small rounding errors that occur when converting back and forth.}
+\end{center}
+\end{figure}
+
+\newpage
+When simulating scanning a large position of the sky (1x1 degrees), a dynamic approach has been taken. The simulation will take into consideration the actual telescope scanning time and intervals, including time taken in resampling the reference point. For each new RADec coordinate, it will calculate the actual position the two beams will land on the celestial sphere. Then it will decide whether to sample the given point or not. Many alterations can be made regarding the factors that lead to the decision. It also takes into consideration the extra time taken to move on to the next point while skipping the current point. Altering these factors and simulating results to predict better days or times for ideal scanning is the key to optimizing the OTF mapping process.
+\newpage
+\section{Outcomes and Discussion}
+\subsection{Initial Findings}
+Simply scanning all points yields between 2 and 3 scans per point in our image. Without much optimization, we would expect around 2 scans per point due to the existence of 2 beams. The below image represents a simple scan without any optimization. While the scans do average around 2-3 scans, many points that have been scanned 4-5 times can be seen. The stripe patterns not only indicate the path the scan took, but also to some extent, the beam separation angles relative to the RADec plane.
+
+\begin{figure}[h!]
+\includegraphics[scale=.25]{firstScan}
+\caption{Histogram of scanning all initially planned points}
+\end{figure}
+\newpage
+
+\begin{figure}
+    \centering
+    \subfloat{{\includegraphics[width=5cm]{beam2} }}
+    \qquad
+    \subfloat{{\includegraphics[width=5cm]{beam1} }}
+    \caption{Histogram of the two beams separately}
+\end{figure}
+
+\subsection{Optimization Results}
+Many existing variables can be varied to yield different results. Some have little or no effect on the scan map, others greatly reduce the number of samples needed, thus saving time, but create stripes in the map resulting in significant portions not being scanned. The extent  to which  these compromises can be made is out of the scope of this summer project. Some resulting maps greatly depend on the location of the sky being scanned and the location of the telescope. Parts of the sky may only be observable on the other side of the planet. The Earth's rotation might also go against the scan direction requiring a higher turning rate than necessary. The part of the sky being scanned might also affect the beam angle separation relative to the RADec plane making some simulations more efficient while others not so much.  The distance between stripes also affect the sampling rate which relates to the beam separation angle as well. The sampling rate itself within a single stripe will also affect the sampling rate. For example, if the beams turn out to be parallel to the scan path, it would be more efficient to have a lower sampling rate on the stripe because one beam essentially would be following the other.\\
+\newpage
+Initially 2 simple logical conditions were used to decide whether a current point is to be sampled.\\\\
+a) If either beams are pointing to a spot that hasn't been pointed at.\\
+
+\begin{figure}[h!]
+ \centering
+\includegraphics[scale=.24]{furgal}
+\caption{Histogram of less sparing optimization}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \subfloat{{\includegraphics[width=5cm]{frugal1} }}
+    \qquad
+    \subfloat{{\includegraphics[width=5cm]{frugal2} }}
+    \caption{Histogram of the two beams separately}
+\end{figure}
+This optimization resulted in  2269/20736 points being skipped. Each box is 25 arcseconds x  25 arcseconds. There are 144 dots
+horizontally and vertically.
+\newpage
+b) Only if both beams are pointing to a spot that hasn't been pointed at.\\
+\begin{figure}[h!]
+ \centering
+\includegraphics[scale=.24]{sparing}
+\caption{Histogram of sparing optimization}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \subfloat{{\includegraphics[width=5cm]{sparing1} }}
+    \qquad
+    \subfloat{{\includegraphics[width=5cm]{sparing2} }}
+    \caption{Histogram of the two beams separately}
+\end{figure}
+This optimization resulted in 10717/20736 points being skipped. While half of the points have been skipped, there seem to be
+many dots that have been completely neglected. This might not be as poorly sampled as it could be the case that points rounded up to the
+closest bins and barely missed the empty one. 
+\newpage
+All of these simulations are with time factored in, taking 10 seconds to scan a point, 10 seconds to move on to the next scan, 
+and taking 15 minutes to re-scan
+the reference point every half an hour.\\
+These images were taken across 4 days. If we add the elevation constraint, we can see that many of the times, the Alt required would be less than 30 degrees, or less than 0 (on the other side of the planet. This consistently makes more than 50 percent of out scans unrealistic. In this particular scan, the starting time was set to 2017-12-27 21:28:30 . Only points scanned between 1AM and 11AM seem to be scannable.\\
+
+Other change in variables include increasing sampling rate, taking a more sparing approach when deciding whether to sample the point or not. The sampling rate as increased 
+by 50 percent, but points were only scanned if both of the beams are pointing to a point where it was never scanned.
+
+\begin{figure}[h!]
+    \centering
+    \subfloat{{\includegraphics[width=5cm]{altconst} }}
+    \qquad
+    \subfloat{{\includegraphics[width=5cm]{auda} }}
+    \caption{Histogram with altitude constraint.(left) and directly increasing sampling rate itself}
+\end{figure}
+
+
+%Another way to change variables would be to increase the distance between the stripes, meaning changing more in declinations every run.
+\newpage
+\section{Results}
+This project was successful in accurately simulating OTF Mapping for Tid-70m and optimization can be implemented to a fair extent. While scanning, the elevation restrictions will
+play a major part in defining the efficiency of the scan. The probability of any point on the sky being scannable is roughly 40 percent. Simple optimization techniques skip from 10 percent to 50 percent of the initially planned points, depending on many of the gaps in the map is tolerable. Foreseeing these unscannable times is also possible can be used to predict suitable days for observations.
+
+\subsection{Future Work}
+The extent to which the gaps are acceptable are out of scope of this project. In this project the sampling rate was dynamically altered to choose suitable points. Similarly, the stripe separation can also be altered corresponding to the slope of the beam pairs to create a high quality map that is neither over or under sampled.
+
+Many complications persist throughout this report. The change in the beam separations throughout the scan seems negligible as it could be rounding errors, but they seem
+to consistently be persisting. It is still unclear whether the separation formulae give angles referring to the RADec plane or if they are absolute separations.\\ 
+
+A proper solution has not been found to tackle the change in beam separation angle relative to the RADec plane. The slope of the pairs consistently change with time, and is computable. When running simulations, a problem arises as decisions made now will affect future scenarios. If we were to skip a certain point because the simulation figured this point will be covered in the future, that's fine, but if we were to skip another point before encountering that future point, the future point might not be scanned anymore. Then again, if we were to create simulations that check for all possible skipping scenarios, the search tree would expand exponentially.
+\newpage
+
+\end{document}
