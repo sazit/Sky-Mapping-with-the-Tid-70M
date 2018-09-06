@@ -1,4 +1,4 @@
-# SkyMapping_Tid70m
+# SkyMapping simulator for the Tid70M Radio Telescope
 
 Simulation of Sky Mapping using the Tidbinbilla Radio Telescope
 
