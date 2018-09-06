@@ -6,3 +6,6 @@ This project aims to simulate sky positions the Tid-70m would be pointing at giv
 
 
 ^The Tid-70m has two receivers set 30 millidegrees apart in azimuth. Thus a normal scan would result in many re-scans of the same point in the sky. This depends on the distance each next step in a scan stripes takes and the distance between stripes as well.
+
+Report can be found here:
+https://zenodo.org/record/1185437
